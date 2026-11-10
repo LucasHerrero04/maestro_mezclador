@@ -17,17 +17,26 @@ class MoveAction:
         }
 
     def is_valid(self, board: Board) -> bool:
-        """Verifica que el movimiento sea dentro del mapa y de exactamente 1 paso."""
-        # Verificamos límites
+        """Verifica límites, distancia y que la celda no esté ocupada por otro jugador."""
+        # 1. Verificamos límites del mapa
         if (self.target_row < 0 or self.target_row >= board.rows or 
             self.target_col < 0 or self.target_col >= board.cols):
             return False
             
-        # Distancia Manhattan: debe ser exactamente 1 (no permite diagonales ni quedarse en el lugar)
+        # 2. Distancia Manhattan: debe ser exactamente 1
         row_diff = abs(self.target_row - self.current_row)
         col_diff = abs(self.target_col - self.current_col)
         
-        return (row_diff + col_diff) == 1
+        if (row_diff + col_diff) != 1:
+            return False
+
+        # 3. DETECCIÓN DE COLISIONES: Evitar pisar a otro jugador
+        target_item = board.get_item(self.target_row, self.target_col)
+        # Si el ítem empieza con "P" (P1, P2, etc.), el movimiento es inválido
+        if target_item.startswith("P"):
+            return False
+            
+        return True
 
     def execute(self, board: Board, player: Player):
         """Ejecuta el movimiento y recolecta ingredientes si los pisa."""
