@@ -210,6 +210,22 @@ def main():
             if len(active_clients) == 0 or (turn_count % 5 == 0 and len(active_clients) < 3):
                 client_counter = spawn_client(board, active_clients, recipes, client_counter)
                 input("\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
+
+            # --- 3. RESPAWN DE CLIENTES ---
+            if len(active_clients) == 0 or (turn_count % 5 == 0 and len(active_clients) < 3):
+                client_counter = spawn_client(board, active_clients, recipes, client_counter)
+                input("\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
                 
+            # --- 4. CONDICIÓN DE VICTORIA ---
+            if current_player.score >= 100:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n" + "="*60)
+                print(f"🏆 ¡EL JUEGO HA TERMINADO! 🏆")
+                print(f"¡Felicidades, {current_player.name.upper()} ({current_player.player_id})!")
+                print(f"Has superado los 100 puntos (Total: {current_player.score}) y")
+                print("te coronas como el MAESTRO MEZCLADOR definitivo.")
+                print("="*60 + "\n")
+                break # Rompe el bucle infinito y termina el programa    
+
 if __name__ == "__main__":
     main()
