@@ -184,19 +184,17 @@ def main():
             # --- 1. LÓGICA DE PACIENCIA (TICK) ---
             clientes_enojados = []
             for cid, client in active_clients.items():
-                client.tick() # Le restamos 1 turno de paciencia
+                client.tick() 
                 
-                if not client.is_active: # Si llegó a 0
+                if not client.is_active: 
                     clientes_enojados.append(cid)
             
-            # Procesamos a los que se van
             for cid in clientes_enojados:
-                # Lo buscamos en el tablero y lo borramos
                 for r in range(board.rows):
                     for c in range(board.cols):
                         if board.get_item(r, c) == cid:
                             board.place_item(r, c, ".")
-                del active_clients[cid] # Lo sacamos del registro
+                del active_clients[cid] 
                 print(f"\n[!] El cliente {cid} se cansó de esperar y se fue dando un portazo.")
             
             if clientes_enojados:
@@ -206,6 +204,12 @@ def main():
             if turn_count % 4 == 0:
                 spawn_ingredients(board, 3) 
                 input("\n🌱 ¡Han brotado nuevos ingredientes! (Enter para continuar...)")
-
+                
+            # --- 3. RESPAWN DE CLIENTES ---
+            # Si está vacío, entra uno ya. Si no, cada 5 turnos entra uno (máximo 3 a la vez).
+            if len(active_clients) == 0 or (turn_count % 5 == 0 and len(active_clients) < 3):
+                client_counter = spawn_client(board, active_clients, recipes, client_counter)
+                input("\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
+                
 if __name__ == "__main__":
     main()
