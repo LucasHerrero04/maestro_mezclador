@@ -10,10 +10,12 @@ class MoveAction:
         
         # Diccionario para traducir la letra del tablero al ingrediente del inventario
         self.ingredient_map = {
-            "H": "hebras_negras",
+            "N": "hebras_negras",
+            "R": "te_rojo",
+            "O": "rooibos",
             "M": "manzanilla",
-            "R": "rooibos",
-            "E": "especias"
+            "F": "frutos_rojos",
+            "C": "canela"
         }
 
     def is_valid(self, board: Board) -> bool:

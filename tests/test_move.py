@@ -9,7 +9,7 @@ def test_valid_move_and_collect():
     
     # Setup: Jugador en (0,0) y Hebras en (0,1)
     board.place_item(0, 0, "P1")
-    board.place_item(0, 1, "H")  
+    board.place_item(0, 1, "N")  
     
     # Acción: moverse una celda a la derecha
     action = MoveAction(0, 0, 0, 1)

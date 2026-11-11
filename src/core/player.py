@@ -5,9 +5,11 @@ class Player:
         self.score = 0
         self.inventory = {
             "hebras_negras": 0,
-            "manzanilla": 0,
+            "te_rojo": 0,
             "rooibos": 0,
-            "especias": 0
+            "manzanilla": 0,
+            "frutos_rojos": 0,
+            "canela": 0
         }
 
     def add_ingredient(self, ingredient: str, amount: int):
