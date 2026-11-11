@@ -13,12 +13,13 @@ class Recipe:
                 return False
         return True
 
-    def craft(self, player: Player):
-        """Descuenta los ingredientes del jugador y le suma los puntos."""
-        if not self.can_be_crafted_by(player):
-            raise ValueError(f"{player.name} no tiene los ingredientes para {self.name}")
-        
-        for ingredient, amount in self.required_ingredients.items():
-            player.remove_ingredient(ingredient, amount)
+    def craft(self, player):
+        if self.can_be_crafted_by(player):
+            # Consumimos los ingredientes
+            for ingredient, amount in self.required_ingredients.items():
+                player.inventory[ingredient] -= amount
             
-        player.score += self.points
+            # NUEVO: En vez de dar puntos, ponemos el té en la bandeja del jugador
+            player.ready_teas.append(self.name)
+        else:
+            raise ValueError(f"No tienes los ingredientes para {self.name}")

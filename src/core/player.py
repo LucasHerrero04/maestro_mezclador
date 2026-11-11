@@ -11,6 +11,7 @@ class Player:
             "frutos_rojos": 0,
             "canela": 0
         }
+        self.ready_teas = []
 
     def add_ingredient(self, ingredient: str, amount: int):
         if ingredient not in self.inventory:
