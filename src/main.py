@@ -1,5 +1,6 @@
 import os
 import random
+from colorama import init, Fore, Back, Style
 from src.core.board import Board
 from src.core.player import Player
 from src.core.game import GameEngine
@@ -46,7 +47,37 @@ def spawn_client(board: Board, active_clients: dict, recipes: list, counter: int
         return counter + 1
     return counter
 
+def render_board(board: Board):
+    """Renderiza el tablero con colores usando Colorama para mejorar la UX de la terminal."""
+    print("")
+    for r in range(board.rows):
+        row_str = ""
+        for c in range(board.cols):
+            item = board.get_item(r, c)
+            if item == ".":
+                row_str += Style.DIM + ".  " + Style.RESET_ALL
+            elif item == "P1":
+                row_str += Fore.CYAN + Style.BRIGHT + "P1 " + Style.RESET_ALL
+            elif item == "P2":
+                row_str += Fore.MAGENTA + Style.BRIGHT + "P2 " + Style.RESET_ALL
+            elif item.startswith("C") and len(item) > 1:
+                row_str += Back.WHITE + Fore.BLACK + f"{item:<2} " + Style.RESET_ALL
+            else:
+                # Colores para ingredientes
+                color = Fore.YELLOW
+                if item in ["R", "F"]: color = Fore.RED
+                elif item == "N": color = Fore.LIGHTBLACK_EX
+                elif item == "M": color = Fore.WHITE
+                elif item == "C": color = Fore.GREEN
+                
+                row_str += color + f"{item}  " + Style.RESET_ALL
+        print("  " + row_str)
+    print("")
+
 def main():
+    # Inicializamos colorama para que limpie los colores automáticamente
+    init(autoreset=True)
+    
     board = Board(6, 6) 
     p1 = Player("P1", "Lucas")
     p2 = Player("P2", "Rival")
@@ -69,8 +100,6 @@ def main():
     
     active_clients = {}
     client_counter = 1
-    
-    # Aparecen 2 clientes al inicio
     client_counter = spawn_client(board, active_clients, recipes, client_counter)
     client_counter = spawn_client(board, active_clients, recipes, client_counter)
     
@@ -80,32 +109,35 @@ def main():
         os.system('cls' if os.name == 'nt' else 'clear')
         current_player = game.get_current_player()
         
-        print(f"\n=== TURNO DE {current_player.name.upper()} ({current_player.player_id}) - PUNTAJE: {current_player.score} ===")
+        # Interfaz colorida
+        header_color = Fore.CYAN if current_player.player_id == "P1" else Fore.MAGENTA
+        print(header_color + Style.BRIGHT + f"\n=== TURNO DE {current_player.name.upper()} ({current_player.player_id}) - PUNTAJE: {current_player.score} ===")
         
         bandeja = ", ".join(current_player.ready_teas) if current_player.ready_teas else "Vacía"
-        print(f"Bandeja de entrega: [{bandeja}]")
+        print(Fore.YELLOW + f"Bandeja de entrega: [{bandeja}]")
         
         inv = current_player.inventory
-        print(f"Bolsa: Negras({inv['hebras_negras']}) | Rojo({inv['te_rojo']}) | Rooibos({inv['rooibos']}) | Manza({inv['manzanilla']}) | Frutos({inv['frutos_rojos']}) | Canela({inv['canela']})")
+        print(Fore.WHITE + f"Bolsa: Negras({inv['hebras_negras']}) | Rojo({inv['te_rojo']}) | Rooibos({inv['rooibos']}) | Manza({inv['manzanilla']}) | Frutos({inv['frutos_rojos']}) | Canela({inv['canela']})")
         
-        print("\nClientes esperando en los bordes:")
+        print(Style.BRIGHT + "\nClientes esperando:")
         for cid, client in active_clients.items():
-            print(f"  [{cid}] Pide: {client.order_name} | Paciencia: {client.patience} turnos | Recompensa: {client.reward} pts")
+            urgency = Fore.RED if client.patience <= 5 else Fore.GREEN
+            print(f"  {Back.WHITE}{Fore.BLACK} {cid} {Style.RESET_ALL} Pide: {Fore.YELLOW}{client.order_name}{Style.RESET_ALL} | Paciencia: {urgency}{client.patience} turnos{Style.RESET_ALL} | Premio: {Fore.GREEN}{client.reward} pts")
             
-        print("\nRecetas disponibles para cocinar (C):")
+        print("\nRecetas (Presiona C para cocinar):")
         for i, r in enumerate(recipes):
-            print(f"  [{i+1}] {r.name} -> Requiere: {r.required_ingredients}")
+            print(f"  [{i+1}] {r.name} -> {r.required_ingredients}")
             
-        board.display()
+        # Llamamos al nuevo renderizador en vez de board.display()
+        render_board(board)
         
-        # ACÁ ESTÁ EL MENÚ CORREGIDO CON LA OPCIÓN 'E'
-        print("Controles: W/A/S/D (Mover) | C (Cocinar) | E (Entregar) | Q (Salir)")
-        move = input("Tu jugada: ").upper()
+        print(Style.DIM + "Controles: W/A/S/D (Mover) | C (Cocinar) | E (Entregar) | Q (Salir)")
+        move = input("> Tu jugada: ").upper()
         
         turn_successful = False
         
         if move == 'Q':
-            print("\n¡Hasta la próxima, Maestro Mezclador!")
+            print(Fore.CYAN + "\n¡Hasta la próxima, Maestro Mezclador!")
             break
             
         elif move == 'C':
@@ -114,15 +146,14 @@ def main():
                 choice = int(input("> ")) - 1
                 selected_recipe = recipes[choice]
                 selected_recipe.craft(current_player)
-                input(f"\n¡Cocinando! Pusiste {selected_recipe.name} en tu bandeja. Ahora llevalo al cliente. (Enter para seguir...)")
+                input(Fore.GREEN + f"\n¡Cocinando! Pusiste {selected_recipe.name} en tu bandeja. (Enter para seguir...)")
                 game.advance_turn()  
                 turn_successful = True
             except ValueError as e:
-                input(f"\n[ERROR] {e} (Enter para seguir...)")
+                input(Fore.RED + f"\n[ERROR] {e} (Enter para seguir...)")
             except IndexError:
-                input("\n[ERROR] Número de receta inexistente. (Enter para seguir...)")
-
-        # ACÁ ESTÁ LA LÓGICA DE LA TECLA 'E' PERFECTAMENTE ALINEADA
+                input(Fore.RED + "\n[ERROR] Número de receta inexistente. (Enter para seguir...)")
+                
         elif move == 'E':
             curr_r, curr_c = find_player(board, current_player.player_id)
             adjacents = [(curr_r-1, curr_c), (curr_r+1, curr_c), (curr_r, curr_c-1), (curr_r, curr_c+1)]
@@ -139,18 +170,18 @@ def main():
                             board.place_item(r, c, ".")
                             del active_clients[target_item]
                             
-                            input(f"\n¡Éxito! Entregaste {client.order_name} a {target_item} y ganaste {client.reward} puntos. (Enter para seguir...)")
+                            input(Fore.GREEN + f"\n¡Éxito! Entregaste {client.order_name} a {target_item} y ganaste {client.reward} pts. (Enter para seguir...)")
                             game.advance_turn()
                             turn_successful = True
                             delivered = True
                             break
                         else:
-                            input(f"\n[{target_item} se enoja] No tenés un '{client.order_name}' en tu bandeja. (Enter para seguir...)")
+                            input(Fore.RED + f"\n[{target_item} se enoja] No tenés '{client.order_name}' en tu bandeja. (Enter para seguir...)")
                             delivered = True
                             break
             
             if not delivered:
-                input("\n[ERROR] No hay ningún cliente adyacente para entregarle nada. (Enter para seguir...)")
+                input(Fore.RED + "\n[ERROR] No hay ningún cliente adyacente para entregarle. (Enter para seguir...)")
             continue
                 
         elif move in ['W', 'A', 'S', 'D']:
@@ -163,29 +194,24 @@ def main():
             elif move == 'D': target_c += 1
                 
             try:
-                # FIX: Motor de colisiones para NPCs
-                # Verificamos que el destino esté dentro del mapa antes de chequear qué hay
                 if 0 <= target_r < board.rows and 0 <= target_c < board.cols:
-                    celda_destino = board.get_item(target_r, target_c)
-                    if celda_destino in active_clients:
+                    if board.get_item(target_r, target_c) in active_clients:
                         raise ValueError("¡No podés pisar a los clientes! Dales su espacio.")
                         
                 action = MoveAction(curr_r, curr_c, target_r, target_c)
                 game.process_action(action)
                 turn_successful = True
             except Exception as e:
-                input(f"\n[MOVIMIENTO INVÁLIDO] {e} (Presiona Enter para continuar...)")
+                input(Fore.RED + f"\n[MOVIMIENTO INVÁLIDO] {e} (Enter para continuar...)")
         else:
             continue
             
         if turn_successful:
             turn_count += 1
             
-            # --- 1. LÓGICA DE PACIENCIA (TICK) ---
             clientes_enojados = []
             for cid, client in active_clients.items():
                 client.tick() 
-                
                 if not client.is_active: 
                     clientes_enojados.append(cid)
             
@@ -195,37 +221,28 @@ def main():
                         if board.get_item(r, c) == cid:
                             board.place_item(r, c, ".")
                 del active_clients[cid] 
-                print(f"\n[!] El cliente {cid} se cansó de esperar y se fue dando un portazo.")
+                print(Fore.RED + f"\n[!] El cliente {cid} se cansó de esperar y se fue dando un portazo.")
             
             if clientes_enojados:
-                input("(Enter para continuar...)")
+                input(Style.DIM + "(Enter para continuar...)")
                 
-            # --- 2. RESPAWN DE INGREDIENTES ---
             if turn_count % 4 == 0:
                 spawn_ingredients(board, 3) 
-                input("\n🌱 ¡Han brotado nuevos ingredientes! (Enter para continuar...)")
+                input(Fore.GREEN + "\n🌱 ¡Han brotado nuevos ingredientes! (Enter para continuar...)")
                 
-            # --- 3. RESPAWN DE CLIENTES ---
-            # Si está vacío, entra uno ya. Si no, cada 5 turnos entra uno (máximo 3 a la vez).
             if len(active_clients) == 0 or (turn_count % 5 == 0 and len(active_clients) < 3):
                 client_counter = spawn_client(board, active_clients, recipes, client_counter)
-                input("\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
-
-            # --- 3. RESPAWN DE CLIENTES ---
-            if len(active_clients) == 0 or (turn_count % 5 == 0 and len(active_clients) < 3):
-                client_counter = spawn_client(board, active_clients, recipes, client_counter)
-                input("\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
+                input(Fore.YELLOW + "\n🔔 ¡Din don! Ha llegado un nuevo cliente. (Enter para continuar...)")
                 
-            # --- 4. CONDICIÓN DE VICTORIA ---
             if current_player.score >= 100:
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print("\n" + "="*60)
+                print(Fore.YELLOW + Style.BRIGHT + "\n" + "="*60)
                 print(f"🏆 ¡EL JUEGO HA TERMINADO! 🏆")
                 print(f"¡Felicidades, {current_player.name.upper()} ({current_player.player_id})!")
                 print(f"Has superado los 100 puntos (Total: {current_player.score}) y")
                 print("te coronas como el MAESTRO MEZCLADOR definitivo.")
                 print("="*60 + "\n")
-                break # Rompe el bucle infinito y termina el programa    
+                break
 
 if __name__ == "__main__":
     main()
